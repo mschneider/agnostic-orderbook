@@ -181,7 +181,7 @@ impl<'a> NodeRef<'a> {
 ////////////////////////////////////
 // Slabs
 
-#[derive(BorshDeserialize, BorshSerialize, Debug, Clone)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, Clone, Copy)]
 struct SlabHeader {
     account_tag: AccountTag,
     bump_index: u64,
@@ -253,7 +253,8 @@ impl<'a> Slab<'a> {
             .unwrap()
     }
 
-    pub(crate) fn initialize(
+    ///
+    pub fn initialize(
         bids_account: &AccountInfo<'a>,
         asks_account: &AccountInfo<'a>,
         market_address: Pubkey,

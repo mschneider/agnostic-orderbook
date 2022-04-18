@@ -29,6 +29,7 @@ pub struct OrderSummary {
 /// The serialized size of an OrderSummary object.
 pub const ORDER_SUMMARY_SIZE: u32 = 41;
 
+///
 pub struct OrderBookState<'a> {
     bids: Slab<'a>,
     asks: Slab<'a>,
@@ -36,6 +37,7 @@ pub struct OrderBookState<'a> {
 }
 
 impl<'ob> OrderBookState<'ob> {
+    ///
     pub fn new_safe(
         bids_account: &AccountInfo<'ob>,
         asks_account: &AccountInfo<'ob>,
@@ -53,6 +55,8 @@ impl<'ob> OrderBookState<'ob> {
             callback_id_len,
         })
     }
+
+    ///
     pub fn find_bbo(&self, side: Side) -> Option<NodeHandle> {
         match side {
             Side::Bid => self.bids.find_max(),
@@ -73,6 +77,7 @@ impl<'ob> OrderBookState<'ob> {
         (best_bid_price, best_ask_price)
     }
 
+    ///
     pub fn get_tree(&mut self, side: Side) -> &mut Slab<'ob> {
         match side {
             Side::Bid => &mut self.bids,
@@ -80,11 +85,13 @@ impl<'ob> OrderBookState<'ob> {
         }
     }
 
+    ///
     pub fn commit_changes(&self) {
         self.bids.write_header();
         self.asks.write_header();
     }
 
+    ///
     pub fn new_order(
         &mut self,
         params: new_order::Params,
@@ -107,7 +114,7 @@ impl<'ob> OrderBookState<'ob> {
         let mut quote_qty_remaining = max_quote_qty;
 
         // New bid
-        let mut crossed = true;
+        // let mut crossed = true;
         let callback_id_len = self.callback_id_len;
         loop {
             if match_limit == 0 {
@@ -115,7 +122,7 @@ impl<'ob> OrderBookState<'ob> {
             }
             let best_bo_h = match self.find_bbo(side.opposite()) {
                 None => {
-                    crossed = false;
+                    // crossed = false;
                     break;
                 }
                 Some(h) => h,
@@ -130,12 +137,12 @@ impl<'ob> OrderBookState<'ob> {
                 .to_owned();
 
             let trade_price = best_bo_ref.price();
-            crossed = match side {
-                Side::Bid => limit_price >= trade_price,
-                Side::Ask => limit_price <= trade_price,
-            };
+            // crossed = match side {
+            //     Side::Bid => limit_price >= trade_price,
+            //     Side::Ask => limit_price <= trade_price,
+            // };
 
-            if post_only || !crossed {
+            if post_only {
                 break;
             }
 
@@ -257,7 +264,8 @@ impl<'ob> OrderBookState<'ob> {
             base_qty_remaining,
         );
 
-        if crossed || !post_allowed || base_qty_to_post < min_base_order_size {
+        // We allow CROSSED orders to still be processed because we don't care if the prices cross before matching
+        if !post_allowed || base_qty_to_post < min_base_order_size {
             return Ok(OrderSummary {
                 posted_order_id: None,
                 total_base_qty: max_base_qty - base_qty_remaining,
@@ -309,7 +317,18 @@ impl<'ob> OrderBookState<'ob> {
         })
     }
 
+    /// 
     pub fn is_empty(&self) -> bool {
         self.asks.root().is_none() && self.bids.root().is_none()
+    }
+
+    ///
+    pub fn bids_is_empty(&self) -> bool {
+        self.bids.root().is_none()
+    }
+
+    ///
+    pub fn asks_is_empty(&self) -> bool {
+        self.asks.root().is_none()
     }
 }
