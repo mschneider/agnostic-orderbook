@@ -61,7 +61,7 @@ use solana_program::declare_id;
 /// Gives access to the methods on the orderbook
 pub mod orderbook;
 #[doc(hidden)]
-pub(crate) mod processor;
+pub mod processor;
 /// Utility functions
 pub mod utils;
 
